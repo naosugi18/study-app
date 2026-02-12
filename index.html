@@ -302,6 +302,106 @@ body {
   margin-bottom: 6px;
   font-weight: 600;
 }
+
+/* ── Action Buttons (edit/delete) ── */
+.item-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.edit-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all .2s;
+}
+.edit-btn:hover { color: #667eea; background: #f0f2ff; }
+
+/* ── Modal ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  animation: fadeIn .2s ease;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.2);
+  animation: modalIn .25s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(.92) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal h2 {
+  font-size: 1.05rem;
+  margin-bottom: 16px;
+  color: #444;
+}
+.modal-field {
+  margin-bottom: 14px;
+}
+.modal-field label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 4px;
+}
+.modal-field input, .modal-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.modal-field input:focus, .modal-field select:focus { border-color: #667eea; }
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+.modal-actions button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+.modal-save {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+}
+.modal-save:hover { transform: scale(1.02); }
+.modal-cancel {
+  background: #f0f0f0;
+  color: #666;
+}
+.modal-cancel:hover { background: #e4e4e4; }
+.modal-delete {
+  background: #fff0f0;
+  color: #f5576c;
+}
+.modal-delete:hover { background: #ffe0e0; }
 </style>
 </head>
 <body>
@@ -397,6 +497,11 @@ body {
     </div>
   </div>
 
+</div>
+
+<!-- ── Edit Modal ── -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalContent"></div>
 </div>
 
 <script>
@@ -512,7 +617,14 @@ function renderSessions() {
   list.innerHTML = sessions.map(s => {
     const d = new Date(s.startTime);
     const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<li class="session-item"><span class="session-date">${dateStr}</span><span class="session-duration">${formatDurationShort(s.duration)}</span></li>`;
+    return `<li class="session-item">
+      <span class="session-date">${dateStr}</span>
+      <span class="session-duration">${formatDurationShort(s.duration)}</span>
+      <span class="item-actions">
+        <button class="edit-btn" onclick="editSession(${s.id})" title="編集">&#9998;</button>
+        <button class="delete-btn" onclick="deleteSession(${s.id})" title="削除">&#10005;</button>
+      </span>
+    </li>`;
   }).join('');
 }
 
@@ -560,12 +672,6 @@ function addTestRecord() {
   renderRecords();
 }
 
-function deleteRecord(id) {
-  const records = getRecords().filter(r => r.id !== id);
-  saveRecords(records);
-  renderRecords();
-}
-
 function renderRecords() {
   const list = document.getElementById('recordList');
   const records = getRecords().slice().sort((a,b) => b.id - a.id);
@@ -580,7 +686,10 @@ function renderRecords() {
         <span class="record-subject">${r.subject}</span>
         <span class="record-score">${r.score}点</span>
       </div>
-      <button class="delete-btn" onclick="deleteRecord(${r.id})" title="削除">✕</button>
+      <span class="item-actions">
+        <button class="edit-btn" onclick="editRecord(${r.id})" title="編集">&#9998;</button>
+        <button class="delete-btn" onclick="deleteRecord(${r.id})" title="削除">&#10005;</button>
+      </span>
     </li>
   `).join('');
 }
@@ -804,6 +913,168 @@ function renderAnalysis() {
     alertCard.style.display = '';
     alertEl.innerHTML = '<div class="empty-state">苦手アラートはありません 🎉</div>';
   }
+}
+
+// ── Modal ──
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// ── Session Edit / Delete ──
+function deleteSession(id) {
+  openModal(`
+    <h2>セッションを削除</h2>
+    <p style="font-size:.9rem;color:#666;margin-bottom:8px">この勉強セッションを削除しますか？この操作は取り消せません。</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="modal-delete" onclick="confirmDeleteSession(${id})">削除する</button>
+    </div>
+  `);
+}
+function confirmDeleteSession(id) {
+  saveSessions(getSessions().filter(s => s.id !== id));
+  closeModal();
+  renderSessions();
+  renderTodayTotal();
+}
+
+function editSession(id) {
+  const session = getSessions().find(s => s.id === id);
+  if (!session) return;
+  const d = new Date(session.startTime);
+  const dateVal = session.startTime.slice(0, 10);
+  const timeVal = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const hours = Math.floor(session.duration / 3600);
+  const mins = Math.floor((session.duration % 3600) / 60);
+
+  openModal(`
+    <h2>セッションを編集</h2>
+    <div class="modal-field">
+      <label>日付</label>
+      <input type="date" id="editSessionDate" value="${dateVal}">
+    </div>
+    <div class="modal-field">
+      <label>開始時刻</label>
+      <input type="time" id="editSessionTime" value="${timeVal}">
+    </div>
+    <div class="modal-field">
+      <label>勉強時間（時間）</label>
+      <input type="number" id="editSessionHours" value="${hours}" min="0" max="23">
+    </div>
+    <div class="modal-field">
+      <label>勉強時間（分）</label>
+      <input type="number" id="editSessionMins" value="${mins}" min="0" max="59">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="modal-save" onclick="saveSessionEdit(${id})">保存</button>
+    </div>
+  `);
+}
+
+function saveSessionEdit(id) {
+  const sessions = getSessions();
+  const idx = sessions.findIndex(s => s.id === id);
+  if (idx === -1) return;
+
+  const dateVal = document.getElementById('editSessionDate').value;
+  const timeVal = document.getElementById('editSessionTime').value;
+  const hours = parseInt(document.getElementById('editSessionHours').value, 10) || 0;
+  const mins = parseInt(document.getElementById('editSessionMins').value, 10) || 0;
+
+  if (!dateVal || !timeVal) { alert('日付と時刻を入力してください'); return; }
+  const duration = hours * 3600 + mins * 60;
+  if (duration <= 0) { alert('勉強時間を1分以上にしてください'); return; }
+
+  const start = new Date(`${dateVal}T${timeVal}:00`);
+  const end = new Date(start.getTime() + duration * 1000);
+  sessions[idx].startTime = start.toISOString();
+  sessions[idx].endTime = end.toISOString();
+  sessions[idx].duration = duration;
+  saveSessions(sessions);
+  closeModal();
+  renderSessions();
+  renderTodayTotal();
+}
+
+// ── Record Edit ──
+function editRecord(id) {
+  const record = getRecords().find(r => r.id === id);
+  if (!record) return;
+
+  const presets = ['国語','数学','英語','物理','化学','生物','日本史','世界史','地理','公民'];
+  const isPreset = presets.includes(record.subject);
+  const options = presets.map(p => `<option value="${p}" ${record.subject === p ? 'selected' : ''}>${p}</option>`).join('');
+
+  openModal(`
+    <h2>テスト記録を編集</h2>
+    <div class="modal-field">
+      <label>日付</label>
+      <input type="date" id="editRecordDate" value="${record.date}">
+    </div>
+    <div class="modal-field">
+      <label>科目</label>
+      <select id="editRecordSubject" onchange="document.getElementById('editRecordCustom').style.display=this.value==='__custom__'?'block':'none'">
+        ${options}
+        <option value="__custom__" ${!isPreset ? 'selected' : ''}>その他（自由入力）</option>
+      </select>
+    </div>
+    <div class="modal-field" id="editRecordCustom" style="display:${!isPreset ? 'block' : 'none'}">
+      <label>科目名（自由入力）</label>
+      <input type="text" id="editRecordCustomInput" value="${!isPreset ? record.subject : ''}">
+    </div>
+    <div class="modal-field">
+      <label>点数</label>
+      <input type="number" id="editRecordScore" value="${record.score}" min="0" max="999">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="modal-save" onclick="saveRecordEdit(${id})">保存</button>
+    </div>
+  `);
+}
+
+function saveRecordEdit(id) {
+  const records = getRecords();
+  const idx = records.findIndex(r => r.id === id);
+  if (idx === -1) return;
+
+  const dateVal = document.getElementById('editRecordDate').value;
+  const sel = document.getElementById('editRecordSubject');
+  const customInput = document.getElementById('editRecordCustomInput');
+  const subject = sel.value === '__custom__' ? customInput.value.trim() : sel.value;
+  const score = parseInt(document.getElementById('editRecordScore').value, 10);
+
+  if (!dateVal) { alert('日付を入力してください'); return; }
+  if (!subject) { alert('科目を入力してください'); return; }
+  if (isNaN(score) || score < 0) { alert('点数を正しく入力してください'); return; }
+
+  records[idx].date = dateVal;
+  records[idx].subject = subject;
+  records[idx].score = score;
+  saveRecords(records);
+  closeModal();
+  renderRecords();
+}
+
+function deleteRecord(id) {
+  openModal(`
+    <h2>テスト記録を削除</h2>
+    <p style="font-size:.9rem;color:#666;margin-bottom:8px">このテスト記録を削除しますか？この操作は取り消せません。</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="modal-delete" onclick="confirmDeleteRecord(${id})">削除する</button>
+    </div>
+  `);
+}
+function confirmDeleteRecord(id) {
+  saveRecords(getRecords().filter(r => r.id !== id));
+  closeModal();
+  renderRecords();
 }
 
 // ── Init ──
