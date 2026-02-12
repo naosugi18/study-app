@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使い方ガイド - 勉強管理 & テスト記録</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #333;
+  padding-bottom: 40px;
+}
+
+.guide-header {
+  text-align: center;
+  padding: 24px 16px 12px;
+  color: #fff;
+}
+.guide-header h1 { font-size: 1.4rem; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,.15); }
+
+.back-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: rgba(255,255,255,.85);
+  text-decoration: none;
+  font-size: .85rem;
+  background: rgba(255,255,255,.2);
+  padding: 6px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  transition: background .2s;
+}
+.back-link:hover { background: rgba(255,255,255,.35); }
+
+.container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+}
+.card h2 {
+  font-size: 1.05rem;
+  margin-bottom: 12px;
+  color: #444;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card h2 .icon {
+  font-size: 1.3rem;
+}
+.card h3 {
+  font-size: .9rem;
+  color: #667eea;
+  margin: 14px 0 6px;
+}
+.card p, .card li {
+  font-size: .88rem;
+  line-height: 1.7;
+  color: #555;
+}
+.card ul, .card ol {
+  padding-left: 1.2em;
+  margin-bottom: 8px;
+}
+.card li { margin-bottom: 4px; }
+
+.step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.step-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .8rem;
+  font-weight: 700;
+}
+.step-text { flex: 1; font-size: .88rem; line-height: 1.7; color: #555; }
+
+.highlight {
+  background: #f0f2ff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: .85rem;
+  color: #555;
+  margin-top: 8px;
+  line-height: 1.7;
+}
+
+.tag {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: .75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.faq-q {
+  font-weight: 700;
+  color: #667eea;
+  font-size: .88rem;
+  margin-bottom: 4px;
+}
+.faq-a {
+  font-size: .85rem;
+  color: #555;
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+</style>
+</head>
+<body>
+
+<header class="guide-header">
+  <h1>使い方ガイド</h1>
+  <a href="index.html" class="back-link">← アプリに戻る</a>
+</header>
+
+<div class="container">
+
+  <!-- Overview -->
+  <div class="card">
+    <h2><span class="icon">📖</span> このアプリについて</h2>
+    <p>勉強時間を記録したり、テストの点数を管理できる高校生向けのアプリです。ログイン不要で、スマホのブラウザからすぐに使えます。</p>
+    <div class="highlight">
+      データはあなたのスマホ（ブラウザ）に保存されます。他の人にデータが見られることはありません。ホーム画面に追加すると、アプリのように使えます。
+    </div>
+  </div>
+
+  <!-- Home Screen -->
+  <div class="card">
+    <h2><span class="icon">📱</span> ホーム画面に追加する方法</h2>
+    <h3>iPhone（Safari）</h3>
+    <div class="step">
+      <span class="step-num">1</span>
+      <span class="step-text">アプリのページを Safari で開く</span>
+    </div>
+    <div class="step">
+      <span class="step-num">2</span>
+      <span class="step-text">画面下の共有ボタン（□に↑のアイコン）をタップ</span>
+    </div>
+    <div class="step">
+      <span class="step-num">3</span>
+      <span class="step-text">「ホーム画面に追加」を選択</span>
+    </div>
+
+    <h3>Android（Chrome）</h3>
+    <div class="step">
+      <span class="step-num">1</span>
+      <span class="step-text">アプリのページを Chrome で開く</span>
+    </div>
+    <div class="step">
+      <span class="step-num">2</span>
+      <span class="step-text">右上の「︙」メニューをタップ</span>
+    </div>
+    <div class="step">
+      <span class="step-num">3</span>
+      <span class="step-text">「ホーム画面に追加」を選択</span>
+    </div>
+  </div>
+
+  <!-- Timer -->
+  <div class="card">
+    <h2><span class="icon">⏱</span> タイマー</h2>
+    <p>勉強時間を計測して記録できます。</p>
+    <h3>使い方</h3>
+    <div class="step">
+      <span class="step-num">1</span>
+      <span class="step-text"><strong>「勉強開始」</strong>ボタンを押すとタイマーがスタートします</span>
+    </div>
+    <div class="step">
+      <span class="step-num">2</span>
+      <span class="step-text">勉強が終わったら<strong>「勉強終了」</strong>ボタンを押すと記録されます</span>
+    </div>
+    <div class="highlight">
+      ページを閉じたり、リロードしてもタイマーは止まりません。次にページを開いたときに自動で再開されます。
+    </div>
+  </div>
+
+  <!-- Test Records -->
+  <div class="card">
+    <h2><span class="icon">📝</span> テスト記録</h2>
+    <p>テストや小テストの点数を記録できます。</p>
+    <h3>記録の追加</h3>
+    <div class="step">
+      <span class="step-num">1</span>
+      <span class="step-text">科目を選択する（リストにない場合は「その他」から自由入力）</span>
+    </div>
+    <div class="step">
+      <span class="step-num">2</span>
+      <span class="step-text">点数を入力する</span>
+    </div>
+    <div class="step">
+      <span class="step-num">3</span>
+      <span class="step-text"><strong>「追加」</strong>ボタンを押す</span>
+    </div>
+    <h3>記録の削除</h3>
+    <p>間違えて追加した場合は、記録の右にある <strong>✕</strong> ボタンで削除できます。</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="card">
+    <h2><span class="icon">📊</span> 統計</h2>
+    <p>勉強時間とテスト成績をグラフで確認できます。</p>
+    <ul>
+      <li><strong>日別勉強時間</strong>：棒グラフで直近の勉強時間を表示。「週間」「月間」で期間を切り替えられます。</li>
+      <li><strong>科目別テスト成績推移</strong>：折れ線グラフで科目ごとの点数の変化を確認できます。</li>
+    </ul>
+  </div>
+
+  <!-- Analysis -->
+  <div class="card">
+    <h2><span class="icon">🔍</span> 分析</h2>
+    <p>テスト記録をもとに、得意・不得意を自動で分析します。</p>
+    <ul>
+      <li><strong>得意科目 TOP 3</strong>：平均点が高い上位3科目</li>
+      <li><strong>不得意科目 TOP 3</strong>：平均点が低い下位3科目（4科目以上記録すると表示）</li>
+      <li><strong>苦手アラート</strong>：同じ科目で50点以下が2回続いた場合に警告が出ます</li>
+    </ul>
+    <div class="highlight">
+      テスト記録が増えるほど分析の精度が上がります。定期テストの結果をこまめに記録しましょう！
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="card">
+    <h2><span class="icon">❓</span> よくある質問</h2>
+
+    <div class="faq-q">Q. データは他の人に見られますか？</div>
+    <div class="faq-a">A. いいえ。データはあなたのブラウザにだけ保存されるので、他の人には見えません。</div>
+
+    <div class="faq-q">Q. 機種変更したらデータは消えますか？</div>
+    <div class="faq-a">A. はい。データはブラウザに保存されているため、別の端末には引き継がれません。</div>
+
+    <div class="faq-q">Q. ブラウザの履歴を消したらデータも消えますか？</div>
+    <div class="faq-a">A. 「サイトデータ」や「Cookie」を削除すると一緒に消える場合があります。履歴だけの削除なら大丈夫です。</div>
+
+    <div class="faq-q">Q. 通信がないところでも使えますか？</div>
+    <div class="faq-a">A. 最初にページを読み込んだ後であれば、グラフ表示以外の機能はオフラインでも使えます。</div>
+  </div>
+
+</div>
+</body>
+</html>

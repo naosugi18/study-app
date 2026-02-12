@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勉強管理 & テスト記録</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #333;
+  padding-bottom: 80px;
+}
+
+.app-header {
+  text-align: center;
+  padding: 24px 16px 12px;
+  color: #fff;
+}
+.app-header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+
+/* ── Tab Navigation ── */
+.tab-nav {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 12px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.tab-btn {
+  flex: 1;
+  max-width: 130px;
+  padding: 10px 6px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255,255,255,.2);
+  color: rgba(255,255,255,.8);
+  font-size: .75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .25s ease;
+  backdrop-filter: blur(8px);
+}
+.tab-btn.active {
+  background: #fff;
+  color: #667eea;
+  box-shadow: 0 4px 15px rgba(0,0,0,.15);
+  transform: translateY(-2px);
+}
+
+/* ── Tab Content ── */
+.tab-content {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.tab-panel {
+  display: none;
+  animation: fadeIn .3s ease;
+}
+.tab-panel.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Card ── */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+}
+.card h2 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+  color: #444;
+}
+.card h3 {
+  font-size: .9rem;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+/* ── Timer ── */
+.timer-display {
+  font-size: 3.2rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: #667eea;
+  letter-spacing: 2px;
+  padding: 16px 0;
+}
+.timer-btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: all .2s;
+}
+.timer-btn.start { background: linear-gradient(135deg, #667eea, #764ba2); }
+.timer-btn.stop  { background: linear-gradient(135deg, #f5576c, #ff6b6b); }
+.timer-btn:hover { transform: scale(1.02); box-shadow: 0 4px 15px rgba(0,0,0,.2); }
+
+.today-total {
+  text-align: center;
+  margin-top: 12px;
+  font-size: .9rem;
+  color: #888;
+}
+.today-total span { color: #667eea; font-weight: 700; font-size: 1.1rem; }
+
+.session-list { list-style: none; }
+.session-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: .85rem;
+}
+.session-item:last-child { border-bottom: none; }
+.session-date { color: #999; }
+.session-duration { font-weight: 600; color: #667eea; }
+
+/* ── Test Record Form ── */
+.form-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.form-row select, .form-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.form-row select:focus, .form-row input:focus { border-color: #667eea; }
+.form-row input[type="number"] { max-width: 90px; }
+
+.add-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-weight: 700;
+  font-size: .9rem;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.add-btn:hover { transform: scale(1.05); }
+
+.record-list { list-style: none; }
+.record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: .85rem;
+}
+.record-item:last-child { border-bottom: none; }
+.record-info { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.record-subject {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 600;
+}
+.record-score { font-weight: 700; color: #333; font-size: 1rem; }
+.record-date { color: #aaa; font-size: .78rem; }
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all .2s;
+}
+.delete-btn:hover { color: #f5576c; background: #fff0f0; }
+
+/* ── Stats Toggle ── */
+.toggle-group {
+  display: flex;
+  background: #f0f0f0;
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 16px;
+}
+.toggle-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: .85rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all .2s;
+}
+.toggle-btn.active {
+  background: #fff;
+  color: #667eea;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 250px;
+}
+
+/* ── Analysis Cards ── */
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.analysis-card {
+  text-align: center;
+  padding: 14px 8px;
+  border-radius: 12px;
+  background: #f8f9ff;
+}
+.analysis-card.good { background: #eefbf3; }
+.analysis-card.bad  { background: #fff5f5; }
+.analysis-card .subject-name { font-weight: 700; font-size: .9rem; margin-bottom: 4px; }
+.analysis-card .avg-score { font-size: 1.3rem; font-weight: 700; }
+.analysis-card.good .avg-score { color: #22c55e; }
+.analysis-card.bad  .avg-score { color: #f5576c; }
+
+.alert-box {
+  background: linear-gradient(135deg, #fff5f5, #ffe8e8);
+  border-left: 4px solid #f5576c;
+  border-radius: 0 12px 12px 0;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  font-size: .85rem;
+}
+.alert-box strong { color: #f5576c; }
+
+.empty-state {
+  text-align: center;
+  color: #aaa;
+  padding: 32px 0;
+  font-size: .9rem;
+}
+
+/* ── Custom subject input ── */
+.custom-subject-row {
+  display: none;
+  margin-bottom: 12px;
+}
+.custom-subject-row.visible { display: flex; }
+.custom-subject-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.custom-subject-row input:focus { border-color: #667eea; }
+
+/* ── Section label ── */
+.section-label {
+  font-size: .8rem;
+  color: #999;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>勉強管理 & テスト記録</h1>
+  <a href="guide.html" style="color:rgba(255,255,255,.8);font-size:.8rem;text-decoration:none;background:rgba(255,255,255,.18);padding:4px 14px;border-radius:20px;display:inline-block;margin-top:6px;backdrop-filter:blur(8px)">❓ 使い方ガイド</a>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="timer">⏱ タイマー</button>
+  <button class="tab-btn" data-tab="tests">📝 テスト</button>
+  <button class="tab-btn" data-tab="stats">📊 統計</button>
+  <button class="tab-btn" data-tab="analysis">🔍 分析</button>
+</nav>
+
+<div class="tab-content">
+
+  <!-- ── Timer Tab ── -->
+  <div id="timer" class="tab-panel active">
+    <div class="card">
+      <div class="timer-display" id="timerDisplay">00:00:00</div>
+      <button class="timer-btn start" id="timerBtn" onclick="toggleTimer()">勉強開始</button>
+      <div class="today-total">今日の合計: <span id="todayTotal">0時間0分</span></div>
+    </div>
+    <div class="card">
+      <h2>直近のセッション</h2>
+      <ul class="session-list" id="sessionList"></ul>
+    </div>
+  </div>
+
+  <!-- ── Test Record Tab ── -->
+  <div id="tests" class="tab-panel">
+    <div class="card">
+      <h2>テスト記録を追加</h2>
+      <div class="form-row">
+        <select id="subjectSelect" onchange="onSubjectChange()">
+          <option value="">科目を選択</option>
+          <option>国語</option>
+          <option>数学</option>
+          <option>英語</option>
+          <option>物理</option>
+          <option>化学</option>
+          <option>生物</option>
+          <option>日本史</option>
+          <option>世界史</option>
+          <option>地理</option>
+          <option>公民</option>
+          <option value="__custom__">その他（自由入力）</option>
+        </select>
+        <input type="number" id="scoreInput" placeholder="点数" min="0" max="999">
+        <button class="add-btn" onclick="addTestRecord()">追加</button>
+      </div>
+      <div class="custom-subject-row" id="customSubjectRow">
+        <input type="text" id="customSubjectInput" placeholder="科目名を入力">
+      </div>
+    </div>
+    <div class="card">
+      <h2>テスト記録一覧</h2>
+      <ul class="record-list" id="recordList"></ul>
+    </div>
+  </div>
+
+  <!-- ── Stats Tab ── -->
+  <div id="stats" class="tab-panel">
+    <div class="card">
+      <h2>日別勉強時間</h2>
+      <div class="toggle-group">
+        <button class="toggle-btn active" data-range="week" onclick="setRange('week')">週間</button>
+        <button class="toggle-btn" data-range="month" onclick="setRange('month')">月間</button>
+      </div>
+      <div class="chart-wrapper"><canvas id="studyChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>科目別テスト成績推移</h2>
+      <div class="chart-wrapper"><canvas id="scoreChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── Analysis Tab ── -->
+  <div id="analysis" class="tab-panel">
+    <div class="card">
+      <h2>得意科目 TOP 3</h2>
+      <div class="analysis-grid" id="goodSubjects"></div>
+    </div>
+    <div class="card">
+      <h2>不得意科目 TOP 3</h2>
+      <div class="analysis-grid" id="badSubjects"></div>
+    </div>
+    <div class="card" id="alertCard">
+      <h2>苦手アラート</h2>
+      <div id="alertList"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Data Layer ──
+function load(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
+}
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+function getSessions() { return load('studySessions') || []; }
+function saveSessions(s) { save('studySessions', s); }
+function getRecords() { return load('testRecords') || []; }
+function saveRecords(r) { save('testRecords', r); }
+function getActiveTimer() { return load('activeTimer'); }
+function saveActiveTimer(v) { save('activeTimer', v); }
+
+// ── Tab Switching ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = document.getElementById(btn.dataset.tab);
+    panel.classList.add('active');
+    if (btn.dataset.tab === 'stats') renderStats();
+    if (btn.dataset.tab === 'analysis') renderAnalysis();
+  });
+});
+
+// ── Timer ──
+let timerInterval = null;
+
+function formatDuration(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function formatDurationShort(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}時間${m}分`;
+  return `${m}分`;
+}
+
+function updateTimerDisplay() {
+  const active = getActiveTimer();
+  if (!active) return;
+  const elapsed = Math.floor((Date.now() - new Date(active.startTime).getTime()) / 1000);
+  document.getElementById('timerDisplay').textContent = formatDuration(elapsed);
+}
+
+function startTimerLoop() {
+  if (timerInterval) clearInterval(timerInterval);
+  updateTimerDisplay();
+  timerInterval = setInterval(updateTimerDisplay, 1000);
+}
+
+function toggleTimer() {
+  const btn = document.getElementById('timerBtn');
+  const active = getActiveTimer();
+  if (active) {
+    // Stop
+    clearInterval(timerInterval);
+    timerInterval = null;
+    const start = new Date(active.startTime);
+    const end = new Date();
+    const duration = Math.floor((end - start) / 1000);
+    if (duration >= 1) {
+      const sessions = getSessions();
+      sessions.push({ id: Date.now(), startTime: active.startTime, endTime: end.toISOString(), duration });
+      saveSessions(sessions);
+    }
+    saveActiveTimer(null);
+    btn.textContent = '勉強開始';
+    btn.className = 'timer-btn start';
+    document.getElementById('timerDisplay').textContent = '00:00:00';
+    renderSessions();
+    renderTodayTotal();
+  } else {
+    // Start
+    const now = new Date().toISOString();
+    saveActiveTimer({ startTime: now });
+    btn.textContent = '勉強終了';
+    btn.className = 'timer-btn stop';
+    startTimerLoop();
+  }
+}
+
+function renderTodayTotal() {
+  const today = new Date().toISOString().slice(0, 10);
+  const sessions = getSessions();
+  let total = 0;
+  sessions.forEach(s => {
+    if (s.startTime.slice(0, 10) === today) total += s.duration;
+  });
+  // Also add ongoing session if active
+  const active = getActiveTimer();
+  if (active && active.startTime.slice(0, 10) === today) {
+    total += Math.floor((Date.now() - new Date(active.startTime).getTime()) / 1000);
+  }
+  document.getElementById('todayTotal').textContent = formatDurationShort(total);
+}
+
+function renderSessions() {
+  const list = document.getElementById('sessionList');
+  const sessions = getSessions().slice().reverse().slice(0, 10);
+  if (sessions.length === 0) {
+    list.innerHTML = '<li class="empty-state">まだセッションがありません</li>';
+    return;
+  }
+  list.innerHTML = sessions.map(s => {
+    const d = new Date(s.startTime);
+    const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<li class="session-item"><span class="session-date">${dateStr}</span><span class="session-duration">${formatDurationShort(s.duration)}</span></li>`;
+  }).join('');
+}
+
+// Init timer state on load
+function initTimer() {
+  const active = getActiveTimer();
+  if (active) {
+    const btn = document.getElementById('timerBtn');
+    btn.textContent = '勉強終了';
+    btn.className = 'timer-btn stop';
+    startTimerLoop();
+  }
+  renderSessions();
+  renderTodayTotal();
+  // Update today total periodically
+  setInterval(renderTodayTotal, 30000);
+}
+
+// ── Test Records ──
+function onSubjectChange() {
+  const sel = document.getElementById('subjectSelect');
+  const row = document.getElementById('customSubjectRow');
+  row.classList.toggle('visible', sel.value === '__custom__');
+}
+
+function addTestRecord() {
+  const sel = document.getElementById('subjectSelect');
+  const scoreInput = document.getElementById('scoreInput');
+  const customInput = document.getElementById('customSubjectInput');
+
+  let subject = sel.value === '__custom__' ? customInput.value.trim() : sel.value;
+  const score = parseInt(scoreInput.value, 10);
+
+  if (!subject) { alert('科目を選択してください'); return; }
+  if (isNaN(score) || score < 0) { alert('点数を正しく入力してください'); return; }
+
+  const records = getRecords();
+  records.push({ id: Date.now(), date: new Date().toISOString().slice(0,10), subject, score });
+  saveRecords(records);
+
+  sel.value = '';
+  scoreInput.value = '';
+  customInput.value = '';
+  document.getElementById('customSubjectRow').classList.remove('visible');
+  renderRecords();
+}
+
+function deleteRecord(id) {
+  const records = getRecords().filter(r => r.id !== id);
+  saveRecords(records);
+  renderRecords();
+}
+
+function renderRecords() {
+  const list = document.getElementById('recordList');
+  const records = getRecords().slice().sort((a,b) => b.id - a.id);
+  if (records.length === 0) {
+    list.innerHTML = '<li class="empty-state">まだテスト記録がありません</li>';
+    return;
+  }
+  list.innerHTML = records.map(r => `
+    <li class="record-item">
+      <div class="record-info">
+        <span class="record-date">${r.date}</span>
+        <span class="record-subject">${r.subject}</span>
+        <span class="record-score">${r.score}点</span>
+      </div>
+      <button class="delete-btn" onclick="deleteRecord(${r.id})" title="削除">✕</button>
+    </li>
+  `).join('');
+}
+
+// ── Stats ──
+let studyChart = null;
+let scoreChart = null;
+let currentRange = 'week';
+
+function setRange(range) {
+  currentRange = range;
+  document.querySelectorAll('.toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.range === range);
+  });
+  renderStats();
+}
+
+function renderStats() {
+  renderStudyChart();
+  renderScoreChart();
+}
+
+function getDayLabels(days) {
+  const labels = [];
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    labels.push(`${d.getMonth()+1}/${d.getDate()}`);
+  }
+  return labels;
+}
+
+function getDayKeys(days) {
+  const keys = [];
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    keys.push(d.toISOString().slice(0, 10));
+  }
+  return keys;
+}
+
+function renderStudyChart() {
+  const days = currentRange === 'week' ? 7 : 30;
+  const labels = getDayLabels(days);
+  const keys = getDayKeys(days);
+  const sessions = getSessions();
+
+  const dayMap = {};
+  keys.forEach(k => dayMap[k] = 0);
+  sessions.forEach(s => {
+    const k = s.startTime.slice(0, 10);
+    if (dayMap[k] !== undefined) dayMap[k] += s.duration;
+  });
+  const data = keys.map(k => +(dayMap[k] / 3600).toFixed(2));
+
+  const ctx = document.getElementById('studyChart').getContext('2d');
+  if (studyChart) studyChart.destroy();
+  studyChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '勉強時間（時間）',
+        data,
+        backgroundColor: 'rgba(102,126,234,.6)',
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: '時間' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderScoreChart() {
+  const records = getRecords().slice().sort((a,b) => a.id - b.id);
+  if (records.length === 0) {
+    const ctx = document.getElementById('scoreChart').getContext('2d');
+    if (scoreChart) scoreChart.destroy();
+    scoreChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: [], datasets: [] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+    return;
+  }
+
+  const subjects = [...new Set(records.map(r => r.subject))];
+  const colors = ['#667eea','#f5576c','#22c55e','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
+
+  const datasets = subjects.map((subj, i) => {
+    const subRecords = records.filter(r => r.subject === subj);
+    return {
+      label: subj,
+      data: subRecords.map(r => ({ x: r.date, y: r.score })),
+      borderColor: colors[i % colors.length],
+      backgroundColor: colors[i % colors.length] + '33',
+      tension: .3,
+      pointRadius: 4,
+      fill: false,
+    };
+  });
+
+  // Collect all unique dates
+  const allDates = [...new Set(records.map(r => r.date))].sort();
+
+  const ctx = document.getElementById('scoreChart').getContext('2d');
+  if (scoreChart) scoreChart.destroy();
+  scoreChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: allDates, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      parsing: { xAxisKey: 'x', yAxisKey: 'y' },
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 11 } } }
+      },
+      scales: {
+        y: { beginAtZero: true, max: 100, title: { display: true, text: '点数' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ── Analysis ──
+function renderAnalysis() {
+  const records = getRecords();
+  const goodEl = document.getElementById('goodSubjects');
+  const badEl = document.getElementById('badSubjects');
+  const alertEl = document.getElementById('alertList');
+  const alertCard = document.getElementById('alertCard');
+
+  if (records.length === 0) {
+    goodEl.innerHTML = '<div class="empty-state" style="grid-column:1/-1">テスト記録を追加すると分析が表示されます</div>';
+    badEl.innerHTML = '';
+    alertEl.innerHTML = '';
+    alertCard.style.display = 'none';
+    return;
+  }
+
+  // Calculate averages per subject
+  const subjectMap = {};
+  records.forEach(r => {
+    if (!subjectMap[r.subject]) subjectMap[r.subject] = [];
+    subjectMap[r.subject].push(r.score);
+  });
+
+  const averages = Object.entries(subjectMap).map(([subject, scores]) => ({
+    subject,
+    avg: Math.round(scores.reduce((a,b) => a+b, 0) / scores.length),
+    count: scores.length
+  }));
+
+  averages.sort((a,b) => b.avg - a.avg);
+
+  // Good subjects (top 3)
+  const good = averages.slice(0, 3);
+  goodEl.innerHTML = good.map(s => `
+    <div class="analysis-card good">
+      <div class="subject-name">${s.subject}</div>
+      <div class="avg-score">${s.avg}</div>
+      <div style="font-size:.7rem;color:#888">${s.count}回受験</div>
+    </div>
+  `).join('');
+
+  // Bad subjects (bottom 3)
+  const bad = averages.slice(-3).reverse();
+  // Don't show same subjects in both good and bad when total subjects <= 3
+  const badFiltered = averages.length > 3 ? bad : [];
+  if (badFiltered.length === 0 && averages.length <= 3) {
+    badEl.innerHTML = '<div class="empty-state" style="grid-column:1/-1">4科目以上の記録で表示されます</div>';
+  } else {
+    const badToShow = badFiltered.length > 0 ? badFiltered : bad;
+    badEl.innerHTML = badToShow.map(s => `
+      <div class="analysis-card bad">
+        <div class="subject-name">${s.subject}</div>
+        <div class="avg-score">${s.avg}</div>
+        <div style="font-size:.7rem;color:#888">${s.count}回受験</div>
+      </div>
+    `).join('');
+  }
+
+  // Weakness alerts: 2 consecutive scores <= 50 for same subject
+  const alerts = [];
+  const sortedRecords = records.slice().sort((a,b) => a.id - b.id);
+  const subjectRecords = {};
+  sortedRecords.forEach(r => {
+    if (!subjectRecords[r.subject]) subjectRecords[r.subject] = [];
+    subjectRecords[r.subject].push(r);
+  });
+
+  Object.entries(subjectRecords).forEach(([subject, recs]) => {
+    for (let i = 1; i < recs.length; i++) {
+      if (recs[i].score <= 50 && recs[i-1].score <= 50) {
+        alerts.push({ subject, scores: [recs[i-1].score, recs[i].score] });
+        break; // one alert per subject
+      }
+    }
+  });
+
+  if (alerts.length > 0) {
+    alertCard.style.display = '';
+    alertEl.innerHTML = alerts.map(a => `
+      <div class="alert-box">
+        <strong>⚠ ${a.subject}</strong> で50点以下が2回連続しています（${a.scores.join('点 → ')}点）。重点的に復習しましょう！
+      </div>
+    `).join('');
+  } else {
+    alertCard.style.display = '';
+    alertEl.innerHTML = '<div class="empty-state">苦手アラートはありません 🎉</div>';
+  }
+}
+
+// ── Init ──
+initTimer();
+renderRecords();
+</script>
+</body>
+</html>
